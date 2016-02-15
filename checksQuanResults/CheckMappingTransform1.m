@@ -1,0 +1,75 @@
+function CheckMappingTransform1(data_set_label,image_label,traj_numbers)
+% This function takes a data_set_label such as 'ATPase-GFP TIRF FRAP' or 'cybD-mCherry &ATPase-GFp', 
+% an image_ label such as '513', '490', etc... which corresponds to a certain .sif number of image sequence, 
+% and certain trajectory numbers, traj_numbers, 
+% and plots the results from the analysis of the image together.
+% The maximum trajectories that can be plotted is 10.
+%
+% traj_numbers is a vector with the numbers of trajectories I want to plot. 
+% Eg. traj_numbers = [1 2 5]. 
+% Each trajectory contains lots of zeros as well as the relevant trajectory data.
+%
+% The average of all frames is plotted, which is always called:  'avg_frame_interface'
+% (The two points from the manual crop rectangle (each channel) are in:
+% label_manual_crop_rect)
+% Several trajectories are plotted on the same figure: stuff..._image_label_paricle_trajectory_1, 
+% stuff..._image_label_paricle_trajectory_2, etc.
+%
+% example of how to call this function:  
+% CheckMappingTransform1('GFP-nuoF & mCherry-sdhC','470',[2 6 8 11]) plots
+% a figure witht the average of all frames in figure 470 within the folder
+% 'GFP-nuoF & mCherry-sdhC', and overlays trajectories 2, 6, 8 and 11 on
+% top of the figure.
+
+% Change to the DataAnalysis directory:
+cd('C:/Isabel/DataAnalysis/oxphos/XueAnalysis/');
+
+data_folder = strcat(cd,'\',data_set_label);
+cd(data_folder); % change to the data folder
+TIRF_data_folder = dir('*TIRF');  % returns a structure with all directories with the word TIRF on their name. The structure has fields 'name', 'date', 'bytes', etc. 
+cd(TIRF_data_folder.name); % The directory name is stored in the 'name' field of the structure.
+
+pre1 = strcat('*',image_label);
+image_folder_struct = dir(pre1); % image_folder_struct is also a structure with field 'name'.
+image_folder_path = strcat(cd,'\',image_folder_struct.name);
+avg_image_path = strcat(image_folder_path,'\','data\','avg_frame_interface.mat'); %avg image is always called 'avg_frame_interface.mat'
+load(avg_image_path) % load data into workspace, where it appears with the name 'avg_single_frame_sequence'
+
+% plot the average of all frames on the image, in gray colormap scale:
+% NOTE!: when the image is loaded from its path, it appears in the workspace with the name 'avg_single_frame_sequence'
+avg_image_data = eval('avg_single_frame_sequence');  % this is the numerical data for the frame average image.
+imagesc(avg_image_data); % colourscale plot
+colormap gray;
+hold;
+
+% Now the trajectories:
+gral_traj_path = strcat(image_folder_path,'\','intensity\'); % general trajectories path
+cd(gral_traj_path);
+
+% list of colours for each trajectory:
+color_list = [1 0 0;0 1 0;0 0 1;1 1 0;1 0 1;0 1 1;0.5 0 0;0 0.5 0;0 0 0.5;0.5 0.5 0];
+% colors are in this order: red, green, blue, yellow, pink, light blue,
+% dark red, dark green, dark blue, brown-green.
+
+% get trajectory data and plot them in a scatter plot on top of the average image:
+for n = 1:size(traj_numbers,2)
+    pre2 = strcat('*_',num2str(traj_numbers(n)),'.xls'); % pre2 is a string to look for in order to list files in the directory containing that string
+    traj_name_struct = dir(pre2); % this is an structure with the field 'name' containing the name of the trajectory file
+    traj_path = strcat(cd,'\',traj_name_struct.name); % string, name of excel trajectory file
+    traj_data = xlsread(traj_path); % to open excel files need to use xlsread
+    selected_rows = find(traj_data(:,1)~=0); % eliminate rows of zeros.
+    selected_traj_data = traj_data(selected_rows,[1,3,4,14,15]);
+    % In the traj_data, the column 1 is the frame number, columns 3 and 4
+    % are global x and y on the top channel (red), and columns 14 and 15 are
+    % global x and y on the bottom channel (green).
+    frame_number = selected_traj_data(:,1);
+    top_x_data = selected_traj_data(:,2);
+    top_y_data = selected_traj_data(:,3);
+    bottom_x_data = selected_traj_data(:,4);
+    bottom_y_data = selected_traj_data(:,5);
+    % plot trajectory:
+    plot(top_x_data,top_y_data,'o','Color',color_list(n,:));
+    plot(bottom_x_data,bottom_y_data,'o','Color',color_list(n,:));
+end
+
+hold off

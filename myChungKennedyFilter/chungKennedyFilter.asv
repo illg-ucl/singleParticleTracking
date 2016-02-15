@@ -1,0 +1,148 @@
+function [XX,TX,DX,SD,DSD,XPRE] = chungKennedyFilter(X,W,R)
+% Commented by Isabel Oct. 2011.
+% Calculate a moving average with two windows of width W, one to the left 
+% of each point in vector X, and another one to the right.
+% Weight the average coming from each window by a weighting factor equal to the variance in that window to the power of -R.
+% Therefore, input R is an exponent used to to create the weights, typically between 1 and 100.
+% Typical window sizes are 4 to 20 data points. 
+%
+% Works well with W = 5 and R = 50 for Oxphos data (Isabel).
+%
+% Outputs:
+% XX: final filtered vector: weighted average of mean values in the two windows.
+% TX = (XP-XM)./(sqrt(2)*SE), where SE is the standard error of the mean.
+% DX: vector with differences between means of left and right windows.
+% SD: std dev. vector: square root of weighted average of the variances of the left and right windows for each point.
+% DSD: vector with differences of stdev (or spreads) on left and right windows considered.
+% XPRE: vector with mean values within a window to the left ("pre") of each point in X ("pre").
+% ---------------
+%chfilt(X,W,R).m, based on Dave Dmith's fortran routine, 03-08-2000
+%window size W, power weighting factor R, 1<<R<100
+%actmot/edge
+%C     Chung-Kennedy filter (adapted from sed.f).
+%C---------------------------------------------------------------------
+%C     General formulation for linear causal+acausal filters 
+%C     coupled to local variances with output Y(t) proportional 
+%C     to "student-t" statistic (ANOVA). Edges identified by maxima
+%C     in |Y(t)| > Yc where threshold Yc is set by user.  
+%C
+%C            Y(t) = (XP(t)-XM(t)/sqrt(S(t)
+%C
+%C     (scaled smooth derivative like student's t/sqrt(W)), with pre-step
+%C     and post-step means XM,XP and variances SM,SP:
+%C
+%C              XM(t) = int(0,W) f(t')x(t-t')dt' % integrate to the right of t in a window of size W.
+%C              XP(t) = int(0,W) f(t')x(t+t')dt'
+%C              SM(t) = int(0,W) f(t')(x(t-t')-XM(t))**2 dt'
+%C              SP(t) = int(0,W) f(t')(x(t+t')-XP(t))**2 dt'
+%C
+%C     and S(t) is average of SM(t) and SP(t).
+%C          The averaging function f(t) is rectangular.
+%C----------------------------------------------------------------------     
+%C     Mod. of Chung and Kennedy J. Neurosci. Meth. 40, 71-86 (1991): for
+%C     a step at time ts:
+%C     If t < ts, variance SP is large, contaminated by step.
+%C     If t > ts, variance SM is large, contaminated by step.
+%C     Construct weight functions GP,GM between 0 and 1 which select the
+%C     uncontaminated average:
+%C
+%C        GM(t) = SP**r/(SP**r + SM**r)
+%C        GP(t) = SM**r/(SP**r + SM**r)      (1 << r < 100).
+%C
+%C     Their filtered output function is 
+%C
+%C            XX(t) = GM(t)*XM(t) + GP(t)*XP(t)
+%C
+%C     but can also define an uncontaminated variance for Y(t) output by 
+%C
+%C            S(t) = GM(t)*SM(t)+GP(t)*SP(t).
+%C
+%C     sqrt(..) is close to SM for t < ts and SP for t > ts, is the 
+%C     uncontaminated variance.
+% --------------
+
+%R=50;
+%WP=100;
+%W=10; (isa: W = 5).
+
+N = length(X);
+
+% Error control: the number of points in the sequence has to be at least
+% the window size:
+if N < W
+    XX = [];
+    disp(['The number of intensity data points is: ',num2str(length(XX))])
+    error('Window size for Chung-Kennedy filter cannot be larger than number of data points'); 
+end
+
+% Extend time series by W points at each end (reflection will do):
+Xnew(W+1:N+W) = X;
+for I = 1:W
+  Xnew(W+1-I) = X(I);
+  Xnew(N+W+I) = X(N-I);
+end
+X = Xnew';
+npts = N+2*W; % length of Xnew.
+
+wdiffx = zeros(npts,1);
+datamx = [];
+datx = zeros(N+W+1,W);
+
+for n = 1:W
+   %datx(:,n) = X(n:N+W+n,1);
+   %datamx = [datamx datx(:,n)];
+   datamx(:,n) = X(n:N+W+n,1); % matrix with W columns and N+W+1 rows.
+end   
+
+% eg. X = [1 2 3 4 5 6]; padded Xnew for W = 3 would be [4 3 2, 1 2 3 4 5 6, 5 4 3];
+% and datamx would be: 
+% [4 3 2
+%  3 2 1
+%  2 1 2
+%  1 2 3
+%  2 3 4 
+%  3 4 5
+%  4 5 6
+%  5 6 5
+%  6 5 4]
+% and the following wx would be the mean of each row:
+
+wx = mean(datamx,2); % mean along the second dimension (rows) gives mean in a window of size W around each element in X.
+sx = std(datamx,0,2); % standard deviation in the windows. '0' flag normalizes by (length-1)
+XP = wx(1:N); % mean within a window to the left of each point in X.
+XM = wx(W+1:N+W); % mean within a window to the right of each point in X, including that point.
+SDP = sx(1:N); % standard deviation (left).
+SDM = sx(W+1:N+W); % standard deviation (right).
+
+DSD = SDP-SDM; % differences of stdev or spreads on each window considered.
+
+SP = SDP.^2; %variance
+SM = SDM.^2;
+      
+% Create switching functions:
+RSP = SP.^(-R); % R is parameter for weights p in paper.
+% In paper, weights are variance to the power of ^(-p) with p between 1 and
+% 100, so I have changed R to -R here and below (Isabel.)
+% If variance is large on one of the windows, it should have a smaller
+% weight, i.e., exponent should be negative.
+RSM = SM.^(-R);
+% Weighting factors (f and b in paper):
+GM = RSP./(RSP+RSM); % make sure weighting factors are normalised and add up to 1.
+GP = RSM./(RSP+RSM);
+
+if GM>=0 & GM<=1 & GP>=0 & GP<=1 % if weights are between 0 and 1:
+    S = GM.*SM + GP.*SP; % weighted average of variances: uncontaminated variance.
+    XX = GP.*XP + GM.*XM; % weighted average of mean values in the two windows.
+else
+    S = SP; % select 'pre' window if things gone awry with weighting fns
+    XX = XP;
+end
+
+SD = sqrt(S); % square root of weighted average of the two variances, so final std dev.
+SE = sqrt(S/W); % Standard error  of the mean is standard deviation divided by sqrt of no. of points averaged.
+    
+%YY=(XP-XM)./(sqrt(2)*SD);
+TX = (XP-XM)./(sqrt(2)*SE);
+DX = (XP-XM);
+XPRE = XP;
+

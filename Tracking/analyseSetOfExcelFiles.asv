@@ -1,0 +1,99 @@
+function  analyseSetOfExcelFiles()
+%
+% Isabel, June 2012.
+%
+% Function that goes into a given folder or set of folders and extracts
+% information from the set of excel files inside it.
+% Note that for running this function, the current directory must be that where the folder with the
+% excel files is.
+% Used to go through the total cell intensity track information (add up the
+% intensity over time of the whole cell and fit it to an exponential -
+% result of using function fullCellIntensity.m).
+% 
+% Output: results is a structure array (matrix). 
+% Element results(1,1) contains the results extracted from the first excel
+% file in the first folder name, as a structure.
+% Element results(1,2) contains the results extracted from the second excel
+% file in the first folder name, as a structure.
+% Element results(2,1) contains the results extracted from the first excel
+% file in the second folder name, as a structure.
+
+%% Build names of folders in which to find excel files to look into:
+
+all_folder_names = {'ATPase-GFP_wholeCell_I'}; % string that labels the data set and is part of the name of folders.
+% all_folder_names = {'cydB-mCherry_wholeCell_I'};
+% all_folder_names = {'green'}; % string that labels the data set and is part of the name of folders.
+% all_folder_names = {'green','red'};
+
+
+%% Go through track files (xls files) in each of the previous folders:
+
+for j =1:length(all_folder_names)
+    
+    cd(all_folder_names{j}); % move into folder (directory);    
+    
+    xlsFileNames0 = dir('*.xls'); % Get names of excel files in that folder (track analysis .xls files).
+    % Error control:
+    if isempty(xlsFileNames0) % If there are no .xls track data files, show error and exit function:
+        error('Check you are in the correct directory. No .xls files found in folder.');
+    end
+    
+    xlsFileNames = {xlsFileNames0.name}; % cell array of strings.
+    
+    % Loop through each track analysis xls file:
+    for k=1:length(xlsFileNames)
+        
+        disp(xlsFileNames{k});
+        
+        % Open and read the data:
+        % Import the data in the sheet named 'Results I fits':
+        [numeric,txt,raw] = xlsread(xlsFileNames{k},'Results I fits');
+        % Turn imported data from excel file into a structure:
+        str_ResultsIfits = cell2struct(raw(:,2),raw(:,1),1);
+       
+        % Store info in result structure cell array:
+        results{j,k} = str_ResultsIfits;
+        results{j,k}.folder_name = all_folder_names{j};
+        results{j,k}.file_name = xlsFileNames{k};
+        
+        % I0_fit = str_ResultsIfits.I0_fit;
+        % tau_fit = str_ResultsIfits.tau_fit;                      
+        
+    end
+    
+    cd('..'); % go back to previous directory.
+    
+end
+
+% Convert cell array into structure array:
+results = cell2mat(results);
+
+% Each column in the following output is:
+% tau_fit
+% stDev_tau
+% tau_fit_percentError
+% rsq_fit_I
+% tau_fit_wo
+% stDev_tau_wo
+% tau_fit_percentError_wo
+% rsq_fit_I_wo
+
+taus_no_offset = [results(1,1:end).tau_fit]'; % column vector
+taus_no_offset_error = [results(1,1:end).stDev_tau]'; % column vector
+taus_no_offset_errorPercent = [results(1,1:end).tau_fit_percentError]'; % column vector
+taus_no_offset_rsq = [results(1,1:end).rsq_fit_I]';
+
+taus_with_offset = [results(1,1:end).tau_fit_wo]'; % column vector
+taus_with_offset_error = [results(1,1:end).stDev_tau_wo]';
+taus_with_offset_errorPercent = [results(1,1:end).tau_fit_percentError_wo]';
+taus_with_offset_rsq = [results(1,1:end).rsq_fit_I_wo]';
+
+% Output for first folder ('green'):
+[taus_no_offset taus_no_offset_error taus_no_offset_errorPercent taus_no_offset_rsq taus_with_offset taus_with_offset_error taus_with_offset_errorPercent taus_with_offset_rsq]
+% Output for second folder ('red'):
+% [[results(2,1:end).tau_fit]' [results(2,1:end).stDev_tau]' [results(2,1:end).tau_fit_percentError]' [results(2,1:end).rsq_fit_I]' [results(2,1:end).tau_fit_wo]' [results(2,1:end).stDev_tau_wo]' [results(2,1:end).tau_fit_percentError_wo]' [results(2,1:end).rsq_fit_I_wo]']
+
+mean(taus_no_offset)
+std(taus_no_offset)
+mean(taus_with_offset)
+std(taus_with_offset)

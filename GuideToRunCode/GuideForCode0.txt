@@ -1,0 +1,5 @@
+C:\Isabel\DataAnalysis\deCharlotte\EGFR TIRF Experiments\1030_SW620-EGFR-EGFP_TwoColour_Green
+
+
+See eg. RunToAnalyse files here:
+C:\Isabel\DataAnalysis\Ollie's\cyoA_mCherry_OlliesData\24October2012\in vivo cyoa-mCherry

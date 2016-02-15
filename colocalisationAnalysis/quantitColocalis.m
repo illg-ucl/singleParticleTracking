@@ -1,0 +1,179 @@
+function quantitColocalis(image_label,start_frame,end_frame)
+%
+% Isabel Llorente Garcia: August 2011.
+% If you use this code please acknowledge Isabel Llorente-Garcia in your
+% publications.
+%
+% Quantitative measure of colocalisation.
+% Calculation of M1 and M2 colocalisation coefficients according to paper
+% Biophys. J. 91, 4611 (2006). Two methods used: ICCS (image
+% cross-correlation spectroscopy) and "automatic colocalisation method", as
+% in the paper.
+%
+% Inputs:
+% image_label such as '513', '490', etc... which corresponds to a certain .sif number of image sequence
+%
+% Example of how to call this function:
+% quantitColocalis('470',5,500) uses image sequence 470.
+% Another example: quantitColocalis('cybD-mCherry &ATPase-GFp','490',10,400).
+
+% Calculate frame average between start_frame and end_frame:
+fr_avg = frameAverage(image_label,start_frame,end_frame,1,0);
+% the one but last input in function frameAverage is to display graph (1) or not (0).
+% the last input in function frameAverage says if saving or not.
+
+% mesh(fr_avg)
+
+% Separate top and bottom channels (usually red and green channels):
+Btop = fr_avg(1:size(fr_avg,1)/2,:); % top channel.
+Bbot = fr_avg((size(fr_avg,1)/2+1):size(fr_avg,1),:); % bottom channel.
+
+Btop2 = Btop - mean2(Btop);
+Bbot2 = Bbot - mean2(Bbot);
+
+% ------------------------
+% % Selecting a sub-region:
+% Btop2 = Btop2(:,220:340);
+% Bbot2 = Bbot2(:,220:340);
+% figure; 
+% subplot(1,2,1); mesh(Btop2);
+% subplot(1,2,2); mesh(Bbot2);
+
+
+%% --------------------------------------------------
+% CALCULATE SPATIAL CROSS-CORRELATION AND AUTOCORRELATION FUNCTIONS FOR
+% BOTH CHANNELS:
+
+size_cor = 30; % how far away to go on displacement to calculate correlation (40).
+steps_cor = -size_cor:size_cor;
+
+% --------------------------------------------------
+% 1. Calculate spatial cross-correlation of top and bottom channels to find out the
+% spatial shift between them:
+TcrossCor = zeros(size(steps_cor,2),size(steps_cor,2));
+for ii = 1:2*size_cor+1 
+    dy = steps_cor(ii); % displacement along y.
+    for jj = 1:2*size_cor+1 
+        dx = steps_cor(jj); % displacement along x.    
+%         % translate top image:
+%         t = maketform('affine',[1 0 ; 0 1; dx dy]);       
+%         Btop2_shifted = imtransform(Btop2,t,'XData',[1 size(Btop2,2)],'YData',[1 size(Btop2,1)]); % translated top channel, padded with zeros.
+%         cor = Bbot2.*Btop2_shifted; % shift the top channel by [dy dx] and multiply by bottom channel.
+        cor = Bbot2.*circshift(Btop2,[dy,dx]); % shift the top channel by [dy dx] and multiply by bottom channel.
+        TcrossCor(ii,jj) = mean2(cor)/(mean2(Btop)*mean2(Bbot)); % summ all pixels and store in cross-correlation result TcrossCor.
+    end
+end
+
+% Position of maximum in the cross-correlation function gives the
+% displacement (shift) of the top channel with respect to the bottom one:
+[y_max_1,x_max_1] = find(TcrossCor==max(max(TcrossCor))); 
+max_value_crossCor = TcrossCor(y_max_1,x_max_1);
+% The shape of the cross-correlation function is not Gaussian, hard to
+% fit... We will use the maximum value, max_value_crossCor, to calculate
+% the colocalisation coefficients M1 and M2 (see Biophys. J. 91, 4611 (2006)).
+shift_x_1 = x_max_1 - (size_cor+1);
+shift_y_1 = y_max_1 - (size_cor+1);
+
+[shift_y_1 shift_x_1]
+
+figure;
+subplot(2,3,1);
+title('cross-correlation');
+imshow(TcrossCor,[]) % show plot of cross-correlation result.
+hold on;
+plot(x_max_1,y_max_1,'x','Color','g','MarkerSize',10) % plot max of cross-correlation in green.
+hold off;
+
+subplot(2,3,4);
+mesh(TcrossCor)
+% --------------------------------------------------
+
+% --------------------------------------------------
+% 2. Calculate spatial auto-correlation function of top channel:
+TautoCor_top = zeros(size(steps_cor,2),size(steps_cor,2));
+for ii = 1:2*size_cor+1 
+    dy = steps_cor(ii); % displacement along y.
+    for jj = 1:2*size_cor+1 
+        dx = steps_cor(jj); % displacement along x.
+%         % translate top image:
+%         t = maketform('affine',[1 0 ; 0 1; dx dy]);       
+%         Btop2_shifted = imtransform(Btop2,t,'XData',[1 size(Btop2,2)],'YData',[1 size(Btop2,1)]); % translated top channel, padded with zeros.
+%         cor = Btop2.*Btop2_shifted; % shift the top channel by [dy dx] and multiply by top channel.
+        cor = Btop2.*circshift(Btop2,[dy,dx]); % shift the top channel by [dy dx] and multiply by top channel.
+        TautoCor_top(ii,jj) = mean2(cor)/(mean2(Btop)*mean2(Btop)); % summ all pixels and store in auto-correlation result TautoCor_top.
+    end
+end
+
+% Find the maximum in the auto-correlation function:
+[y_max_2,x_max_2] = find(TautoCor_top==max(max(TautoCor_top))); 
+max_value_autoCor_top = TautoCor_top(y_max_2,x_max_2);
+% The shape of the cross-correlation function is not Gaussian, hard to
+% fit... We will use the maximum value, max_value_crossCor, to calculate
+% the colocalisation coefficients M1 and M2 (see Biophys. J. 91, 4611 (2006)).
+shift_x_2 = x_max_2 - (size_cor+1);
+shift_y_2 = y_max_2 - (size_cor+1);
+
+[shift_y_2 shift_x_2]
+
+subplot(2,3,2);
+title('auto-correlation Top channel');
+imshow(TautoCor_top,[]) % show plot of cross-correlation result.
+hold on;
+plot(x_max_2,y_max_2,'x','Color','g','MarkerSize',10) % plot max of cross-correlation in green.
+hold off;
+
+subplot(2,3,5);
+mesh(TautoCor_top)
+% --------------------------------------------------
+
+% --------------------------------------------------
+% 3. Calculate spatial auto-correlation function of bottom channel:
+TautoCor_bot = zeros(size(steps_cor,2),size(steps_cor,2));
+for ii = 1:2*size_cor+1 
+    dy = steps_cor(ii); % displacement along y.
+    for jj = 1:2*size_cor+1 
+        dx = steps_cor(jj); % displacement along x.
+%         % translate bottom image:
+%         t = maketform('affine',[1 0 ; 0 1; dx dy]);       
+%         Bbot2_shifted = imtransform(Bbot2,t,'XData',[1 size(Bbot2,2)],'YData',[1 size(Bbot2,1)]); % translated bottom channel, padded with zeros.
+%         cor = Bbot2.*Bbot2_shifted; % shift the bottom channel by [dy dx] and multiply by bottom channel.
+        cor = Bbot2.*circshift(Bbot2,[dy,dx]); % shift the bottom channel by [dy dx] and multiply by bottom channel.
+        TautoCor_bot(ii,jj) = mean2(cor)/(mean2(Bbot)*mean2(Bbot)); % summ all pixels and store in auto-correlation result TautoCor_bot.
+    end
+end
+
+% Find the maximum in the auto-correlation function:
+[y_max_3,x_max_3] = find(TautoCor_bot==max(max(TautoCor_bot))); 
+max_value_autoCor_bot = TautoCor_bot(y_max_3,x_max_3);
+% The shape of the cross-correlation function is not Gaussian, hard to
+% fit... We will use the maximum value, max_value_crossCor, to calculate
+% the colocalisation coefficients M1 and M2 (see Biophys. J. 91, 4611 (2006)).
+shift_x_3 = x_max_3 - (size_cor+1);
+shift_y_3 = y_max_3 - (size_cor+1);
+
+[shift_y_3 shift_x_3]
+
+subplot(2,3,3);
+title('auto-correlation Bottom channel');
+imshow(TautoCor_bot,[]) % show plot of cross-correlation result.
+hold on;
+plot(x_max_3,y_max_3,'x','Color','g','MarkerSize',10) % plot max of cross-correlation in green.
+hold off;
+
+subplot(2,3,6);
+mesh(TautoCor_bot)
+colormap(jet);
+% --------------------------------------------------
+
+%% CALCULATE COLOCALISATION COEFFICIENTS:
+
+max_value_crossCor
+max_value_autoCor_top
+max_value_autoCor_bot
+
+M1_cor = max_value_crossCor/max_value_autoCor_top; 
+M2_cor = max_value_crossCor/max_value_autoCor_bot; 
+
+M1_cor
+M2_cor
+
