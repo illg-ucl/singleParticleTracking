@@ -1,10 +1,9 @@
 function [new_spotsX new_spotsY candid_pos_to_keep] = eliminateCoincidentSpots(spotsX,spotsY,limit_dist)
 %
-% Created by Isabel Llorente-Garcia, 2011.
-% If you use this code please acknowledge Isabel Llorente-Garcia in your
-% publications.
+% Created by Isabel Llorente-Garcia, 2011. If you use this code please
+% acknowledge Isabel Llorente-Garcia in your publications.
 %
-% ELIMINATE COINCIDENT points
+% ELIMINATE COINCIDENT candidate bead positionspoints 
 %
 % Inputs: spotsX and spotsY are two column vectors with the x and y
 % coordinates of the spots, respectively.
