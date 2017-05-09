@@ -252,7 +252,7 @@ end
 % one. Create matrices with results of pair-wise spatial distances, intensity ratios, sigma ratios and distance in frames.
 
 % Create cell arrays with empty elements to pre-asign sizes:
-A = single(zeros(trajs_max,trajs_max)); % create matrix of the right size, with all zeros, single precission.
+A = single(rej*ones(trajs_max,trajs_max)); % create matrix of the right size, with all rej values, single precission.
 
 d01 = num2cell(A); % Note: d01 is a cell array (matrix) but d_01 below is a scalar.
 Iratio01 = num2cell(A); % Note: Iratio01 is a cell array (matrix) but Iratio_01 below is a scalar.
