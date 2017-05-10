@@ -7,7 +7,7 @@ Copyright (c) 2017. Isabel Llorente-Garcia, Dept. of Physics and Astronomy, Univ
 
 Released and licensed under a BSD 2-Clause License:
 
-https://github.com/illg-ucl/singleParticleTracking//blob/master/LICENSE
+https://github.com/illg-ucl/singleParticleTracking/blob/master/LICENSE
 
 This program is free software: you can redistribute it and/or modify it under the terms of the BSD 2-Clause License.
 
