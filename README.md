@@ -2,6 +2,9 @@
 
 Matlab code for the detection and tracking in two dimensions (2D) of bright spots in microscope images (on a dark background). The code can be used to analyse fluorescence microscopy videos of living cells with fluorescently labelled proteins that appear on the images as bright spots.
 
+**Related publication**:  
+*Single-molecule in vivo imaging of bacterial respiratory complexes indicates delocalized oxidative phosphorylation*, I. Llorente-Garcia, T. Lenn, H. Erhardt, O. L. Harriman, L.-N. Liu, A. Robson, S.-W. Chiu, S. Matthews, N. J. Willis, C. D. Bray, S.-H. Lee, J. Yen Shin, C. Bustamante, J. Liphardt, T. Friedrich, C. W. Mullineaux and M. C. Leake. Biochimica et Biophysica Acta (BBA): Bioenergetics 1837, 811-824 (2014). https://www.sciencedirect.com/science/article/pii/S0005272814000309?via%3Dihub. 
+
 # Copyright and License
 
 Copyright (c) 2017. Isabel Llorente-Garcia, Dept. of Physics and Astronomy, University College London, United Kingdom.
