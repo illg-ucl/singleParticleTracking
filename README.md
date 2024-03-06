@@ -34,9 +34,20 @@ Citation: If you use this software for your data analysis please acknowledge it 
             url          = {https://github.com/illg-ucl/singleParticleTracking/
             }
 
-# Help folders
-- **"GuideToRunCode/"**: see "GuideToRunCode/Guide to run Isabel's code.pdf" for detailed instructions on how to run the code.
-- **"scriptsThatHelpRunCode/"**: see "scriptsThatHelpRunCode/" for various Matlab scripts that help run the code and do analysis of multiple image files, analysis of output excel files, etc.
+# Guide to run code and basic steps of analysis
+
+* Help folder **"GuideToRunCode/"** contains guide **"GuideToRunCode/Guide to run Isabel's code.pdf"** with detailed instructions on how to run the code.
+  
+* Help folder **"scriptsThatHelpRunCode/"** contains various Matlab scripts that help run the code and do analysis of multiple image files, analysis of output excel files, etc.
+
+* **Basic steps** needed to track bright spots on videos (more details in the above mentioned guide):
+    - Set-up Matlab and correct data folders and current directory;
+    - Set values of relevant parameters;
+    - Find spot trajectories in image sequence and output them to an Excel file in the current directory using function **"FindTrajects.m"**.   
+    - Link trajectory segments found into longer trajectories using **"linkTrajSegments.m"**.
+    - Inspect tracks visually (on a video) and manually to validate good tracks by deciding which to accept as good using function **"goThroughTracksVideo.m"**. 
+    - Analyse each track separatedly and produce one analysis Excel file and graph per track. This is based on functions **"showTrajAnalysis2.m"** and **"showManyTrajAnalysis2.m**. The **analysis includes**: trajectory number, mean x and y positions, number of points in track, track duration, spot intensity versus time with exponential fit, particle trajectory on x-y plane, first frame with trajectory overlayed, calculation of particle mean square displacement (MSD) versus delta time with error bars, fit of MSD curve (mobility and diffusion analysis), analysis of (bacteria) cell sizes and centre (useful when imaging multiple bacteria), etc.
+
 
 # Matlab function folders
 
