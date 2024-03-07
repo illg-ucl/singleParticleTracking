@@ -5,6 +5,12 @@ Matlab code for the detection and tracking in two dimensions (2D) of bright spot
 **Related publication**:  
 *Single-molecule in vivo imaging of bacterial respiratory complexes indicates delocalized oxidative phosphorylation*, I. Llorente-Garcia, T. Lenn, H. Erhardt, O. L. Harriman, L.-N. Liu, A. Robson, S.-W. Chiu, S. Matthews, N. J. Willis, C. D. Bray, S.-H. Lee, J. Yen Shin, C. Bustamante, J. Liphardt, T. Friedrich, C. W. Mullineaux and M. C. Leake. Biochimica et Biophysica Acta (BBA): Bioenergetics 1837, 811-824 (2014). https://www.sciencedirect.com/science/article/pii/S0005272814000309?via%3Dihub. 
 
+Example:
+
+<p align="center">
+  <img src="https://github.com/illg-ucl/singleParticleTracking/blob/master/single_particle_tracking_flu.png" width=55% height=55%>
+</p>
+
 # Copyright and License
 
 Copyright (c) 2017. Isabel Llorente-Garcia, Dept. of Physics and Astronomy, University College London, United Kingdom.
